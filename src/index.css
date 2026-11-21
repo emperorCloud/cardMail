@@ -1,0 +1,109 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Bleu CARDMail (enveloppe du logo) : remplace l'ancienne teinte "teal" dans toute l'interface */
+  --color-teal-50: #eef4ff;
+  --color-teal-100: #dae7ff;
+  --color-teal-200: #bcd3ff;
+  --color-teal-300: #8db4ff;
+  --color-teal-400: #5590fb;
+  --color-teal-500: #2b6df0;
+  --color-teal-600: #1556d6;
+  --color-teal-700: #1245b0;
+  --color-teal-800: #133a8d;
+  --color-teal-900: #142f6e;
+  --color-teal-950: #0a1b45;
+
+  /* Orange CARDMail (orbite du logo) : accent réservé aux signaux (non lu, actions clés) */
+  --color-accent-300: #ffc078;
+  --color-accent-400: #ffa534;
+  --color-accent-500: #ff8a0a;
+  --color-accent-600: #ec6f00;
+
+  /* Neutres teintés marine */
+  --color-slate-50: #f3f6fc;
+  --color-slate-100: #e8eef8;
+  --color-slate-200: #d6e0ef;
+  --color-slate-300: #b6c4dc;
+  --color-slate-400: #8496b5;
+  --color-slate-500: #5f7190;
+  --color-slate-600: #475877;
+  --color-slate-700: #354562;
+  --color-slate-800: #1e2b47;
+  --color-slate-900: #111a33;
+  --color-slate-950: #080f24;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.015em; }
+  .font-mono, code, pre { font-family: var(--font-mono); }
+  :focus-visible { outline-offset: 2px; }
+}
+
+.tabular-nums { font-variant-numeric: tabular-nums; }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Fond d'application : lueur bleue en haut à gauche, trace d'orange en bas à droite */
+.app-bg {
+  background-color: #f3f6fc;
+  background-image:
+    radial-gradient(900px 500px at -5% -10%, rgba(43, 109, 240, 0.09), transparent 60%),
+    radial-gradient(700px 420px at 105% 110%, rgba(255, 138, 10, 0.06), transparent 60%);
+}
+.dark .app-bg {
+  background-color: #070c1c;
+  background-image:
+    radial-gradient(900px 520px at -5% -10%, rgba(43, 109, 240, 0.16), transparent 60%),
+    radial-gradient(700px 420px at 105% 110%, rgba(255, 138, 10, 0.07), transparent 60%);
+}
+
+/* Surface vitrée (en-tête, panneaux flottants) */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  backdrop-filter: saturate(160%) blur(16px);
+}
+.dark .glass { background: rgba(10, 18, 40, 0.68); }
+
+/* Panneau de marque de la page de connexion */
+.brand-panel {
+  background:
+    radial-gradient(700px 480px at 12% 8%, rgba(43, 109, 240, 0.55), transparent 62%),
+    radial-gradient(620px 460px at 95% 100%, rgba(255, 138, 10, 0.28), transparent 60%),
+    linear-gradient(160deg, #0b2a6f 0%, #071a4a 48%, #050f2e 100%);
+}
+.brand-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 30% 30%, #000 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse at 30% 30%, #000 0%, transparent 72%);
+}
+
+/* Unique moment animé : l'orbite orange se trace au chargement de la connexion */
+@keyframes orbit-trace { from { stroke-dashoffset: 1; opacity: 0; } 12% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+.orbit-path { stroke-dasharray: 1; stroke-dashoffset: 0; animation: orbit-trace 1.8s cubic-bezier(.22,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .orbit-path { animation: none; } * { scroll-behavior: auto !important; } }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(95, 113, 144, 0.32); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(95, 113, 144, 0.55); background-clip: content-box; }
+
+/* Affichage isolé du corps des e-mails */
+.cardmail-email-body { font-family: var(--font-sans); line-height: 1.7; overflow-wrap: anywhere; word-break: break-word; }
+.cardmail-email-body a { color: #1556d6; text-decoration: underline; text-underline-offset: 2px; }
+.dark .cardmail-email-body a { color: #8db4ff; }
+.cardmail-email-body blockquote { border-left: 3px solid rgba(255, 138, 10, 0.55); padding-left: 0.875rem; margin: 0.75rem 0; color: #5f7190; }
+.dark .cardmail-email-body blockquote { color: #8496b5; }
+.cardmail-email-body img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+.cardmail-email-body table { max-width: 100%; border-collapse: collapse; }

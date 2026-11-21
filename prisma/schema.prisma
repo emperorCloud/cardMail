@@ -1,0 +1,191 @@
+// Schéma Prisma de référence pour déploiement PostgreSQL autonome (Docker / Production externe CARDIT)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum SyncStatus {
+  ACTIVE
+  ERROR
+  PAUSED
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  BLOCKED
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        RoleType @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  firstName         String
+  lastName          String
+  passwordHash      String
+  avatarUrl         String?
+  isActive          Boolean            @default(true)
+  roleId            String
+  role              Role               @relation(fields: [roleId], references: [id])
+  inboxes           UserInbox[]
+  sessions          Session[]
+  contacts          Contact[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+  preferences       UserPreference?
+  auditLogs         AuditLog[]         @relation("ActorLogs")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([email])
+  @@index([roleId])
+}
+
+model Inbox {
+  id            String         @id @default(cuid())
+  resendInboxId String         @unique
+  emailAddress  String         @unique
+  displayName   String?
+  fromName      String?
+  syncStatus    SyncStatus     @default(ACTIVE)
+  lastSyncAt    DateTime?
+  lastError     String?
+  users         UserInbox[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([emailAddress])
+  @@index([resendInboxId])
+}
+
+model UserInbox {
+  id         String   @id @default(cuid())
+  userId     String
+  inboxId    String
+  isDefault  Boolean  @default(false)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inbox      Inbox    @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([userId, inboxId])
+  @@index([userId])
+  @@index([inboxId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Contact {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  email        String
+  organization String?
+  phone        String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, email])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  inboxId   String
+  threadId  String?
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inbox     Inbox    @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  actorUserId String?
+  actor       User?       @relation("ActorLogs", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action      String
+  targetType  String?
+  targetId    String?
+  status      AuditStatus @default(SUCCESS)
+  ipAddress   String?
+  details     String?
+  createdAt   DateTime    @default(now())
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model UserPreference {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme          String   @default("system")
+  signatureHtml  String   @default("")
+  pushEnabled    Boolean  @default(false)
+  compactDensity Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+}
+
+model WebhookEvent {
+  id           String   @id @default(cuid())
+  svixId       String   @unique
+  eventType    String
+  inboxId      String?
+  status       String
+  errorMessage String?
+  receivedAt   DateTime @default(now())
+
+  @@index([eventType])
+  @@index([receivedAt])
+}
