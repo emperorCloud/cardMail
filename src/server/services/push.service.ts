@@ -1,10 +1,10 @@
-import { createRequire } from 'node:module';
-import type webPushType from 'web-push';
+import * as webPushModule from 'web-push';
 import { serverEnv } from '../config/env.ts';
 import { store } from '../db/store.ts';
 
-const require = createRequire(import.meta.url);
-const webpush = require('web-push') as typeof webPushType;
+// web-push 3.x est un module CommonJS : cet import fonctionne aussi bien sous tsx (ESM) que dans la fonction Vercel (CJS).
+type WebPush = typeof import('web-push');
+const webpush = ((webPushModule as unknown as { default?: WebPush }).default ?? webPushModule) as WebPush;
 
 class PushService {
   private configured = false;
